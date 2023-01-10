@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+
+<head>
+
+  <meta charset="utf-8">
+
+  <script type="text/javascript" src="js/fontkit.js"></script>
+  <script type="text/javascript" src="js/three.min.js"></script>
+  <style>
+    @font-face {
+      font-family: 'comic';
+      src: url('font/ComicNeue-BoldItalic.ttf') format('truetype');
+    }
+
+    body, input, button {
+      text-align: center;
+      font-family: comic, cursive;
+    }
+
+    #resultTable,
+    #resultTable tr,
+    #resultTable td {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      font-variant-ligatures: none;
+    }
+
+    .tdr {
+      text-align: right;
+      padding: 0.25em;
+    }
+
+    .tdl {
+      text-align: left;
+      padding: 0.25em;
+    }
+
+
+    table {
+      margin: auto;
+      border-left: solid 3px #C0C0C0;
+      border-top: solid 3px #C0C0C0;
+      border-right: solid 3px #808080;
+      border-bottom: solid 3px #808080;
+    }
+
+    td,
+    th {
+      border-left: solid 1px #808080;
+      border-top: solid 1px #808080;
+      border-right: solid 1px #C0C0C0;
+      border-bottom: solid 1px #C0C0C0;
+    }
+
+    #resultTable {
+      border-collapse: collapse;
+    }
+
+    input[type='number'] {
+      width: 4em;
+      text-align: right;
+    }
+
+    .info {
+      cursor: pointer;
+    }
+
+    .in {
+      background-color: #CCFFCC;
+      border: solid 2px #00FF00;
+    }
+
+    .out {
+      background-color: #FFCCCC;
+      border: solid 2px #FFAAAA;
+    }
+
+    .in,
+    .out {
+      margin: 3px;
+      padding: 0;
+      display: inline-block;
+    }
+  </style>
+  <title>GlyphHero (get it?)</title>
+</head>
+
+<body>
+  <h1>GlyphHero <span style="font-size:small">(get it?)</span></h1>
+  <table>
+    <tr>
+      <th colspan="3">Settings</td>
+    </tr>
+    <tr>
+      <td class="tdr">Font:</td>
+      <td class="tdl"><input type="file" id="fontFile"></td>
+      <td><span class="info"
+          title="The font file whose glyphs are used to compose the image. It is advisable to use a monospace font.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Font size:</td>
+      <td class="tdl"><input type="number" id="fontSize" value="12" min="1">px </td>
+      <td><span class="info"
+          title="The font size in pixels. Note that the actual line height depends on ascent+descent values stored in the font.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Glyph with reference width:</td>
+      <td class="tdl"><input type="text" id="refWidthGlyph" value="_" size="1"> </td>
+      <td><span class="info"
+          title="Only glyphs that have the same cursor advance width as the glyph for this character will be used.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Glyph overlap tolerance:</td>
+      <td class="tdl"><input type="number" id="overlap" value="3" min="0">% of font size </td>
+      <td><span class="info"
+          title="Some glyphs draw over the little rectangle they should stay in, so they will reach into a neighboring tile. Here you can allow how much is ok.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Only use glyphs:</td>
+      <td class="tdl"><input type="text" id="include" value=""> </td>
+      <td><span class="info"
+          title="If you only want to allow a specific set of characters you can specify it here. Leave empty to allow all characters in the font. This is overridden by the exclude field below.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Exclude glyphs:</td>
+      <td class="tdl"><input type="text" id="exclude" value=""> </td>
+      <td><span class="info"
+          title="If you want to exclude certain characters (for instance because you don't want block elements to dominate your result), you can specify them here. This overrides the include field above.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Blur glyphs:</td>
+      <td class="tdl"><input type="number" id="blur" value="2" min="0" step="0.1">px </td>
+      <td><span class="info"
+          title="Blurring the glyphs can help to give more intricate glyphs an edge over otherwise dominant simple glyphs.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Force background color:</td>
+      <td class="tdl">
+        <input type="checkbox" id="enableForceBack"
+          onchange="dom('forceBack').style.visibility = this.checked?'visible':'hidden'">
+        <input type="color" id="forceBack" value="#ffffff" style="visibility:hidden">
+      </td>
+      <td><span class="info"
+          title="If you don't enforce a background color, it will be determined automagically for every tile individually.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Force foreground color:</td>
+      <td class="tdl">
+        <input type="checkbox" id="enableForceFore"
+          onchange="dom('forceFore').style.visibility = this.checked?'visible':'hidden'">
+        <input type="color" id="forceFore" value="#000000" style="visibility:hidden">
+      </td>
+      <td><span class="info"
+          title="If you don't enforce a foreground color, it will be determined automagically for every glyph individually.">ℹ️</span>
+      </td>
+    </tr>
+    <tr>
+      <td class="tdr">Image:</td>
+      <td class="tdl"><input type="file" id="imageFile"> </td>
+      <td><span class="info" title="Select the image you want to turn into beautiful unicode art.">ℹ️</span></td>
+    </tr>
+    <tr>
+      <td class="tdr">Gamma:</td>
+      <td class="tdl"><input type="number" id="gamma" value="1.0" step="0.1"> </td>
+      <td><span class="info"
+          title="When working in black and white, it can help to play with the gamma value of the image.">ℹ️</span></td>
+    </tr>
+  </table><br>
+
+  <table>
+    <tr>
+      <td>
+        <details open="true">
+          <summary>Glyphs</summary>
+          <hr style="border-top: 1px solid #C0C0C0">
+          <div id="allCharacters" style="text-align:left"></div>
+        </details>
+      </td>
+    </tr>
+  </table><br>
+
+  <button onclick="generate()" style="font-size:x-large; background-color:cyan; color:fuchsia; border: solid 3px blue">Generate!</button><br><br>
+
+  <table id="original" style="display:table">
+    <tr>
+      <th onclick="showResult()" style="cursor:pointer">Original ⏴ Result</th>
+    </tr>
+    <tr>
+      <td id="originalContainer">
+      </td>
+    </tr>
+  </table>
+
+  <table id="result" style="display:none">
+    <tr>
+      <th onclick="showOriginal()" style="cursor:pointer">Original ⏵ Result</th>
+    </tr>
+    <tr>
+      <td>
+        <table id="resultTable"></table>
+      </td>
+    </tr>
+  </table>
+
+  <canvas id="glyphCanvas" style="display:none;"></canvas>
+  <canvas id="buffer" style="display:none; "></canvas>
+
+  <script>
+
+    let CFG = {}
+    let FONT = null
+    let IMG = null
+    let GLYPHS = []
+
+    function dom(id) { return document.getElementById(id) }
+
+    function showOriginal(){
+      dom("original").style.display = "table"
+      dom("result").style.display = "none"
+    }
+
+    function showResult(){
+      dom("result").style.display = "table"
+      dom("original").style.display = "none"
+    }
+
+    function updateGlyphs() {
+
+      CFG.fontSizePx = dom("fontSize").value
+      CFG.lineHeightPx = Math.ceil(CFG.fontSizePx * (FONT.ascent - FONT.descent) / FONT.unitsPerEm)
+      CFG.refWidthGlyph = dom("refWidthGlyph").value
+      if (CFG.refWidthGlyph == "") { CFG.refWidthGlyph = "_" }
+      let advanceUnits = FONT.glyphForCodePoint(CFG.refWidthGlyph.codePointAt(0)).advanceWidth
+      CFG.advancePx = CFG.fontSizePx * advanceUnits / FONT.unitsPerEm
+      CFG.overlap = dom("overlap").value / 100.0
+      CFG.include = dom("include").value
+      CFG.exclude = dom("exclude").value
+      CFG.blur = dom("blur").value
+
+      var xMin = 0
+      var xMax = advanceUnits
+      var yMin = FONT.descent
+      var yMax = FONT.ascent
+
+      var tol = CFG.fontSizePx * CFG.overlap * FONT.unitsPerEm
+      xMin -= tol
+      xMax += tol
+      yMin -= tol
+      yMax += tol
+
+      GLYPHS = []
+      let allCharacters = ""
+      for (let c of FONT.characterSet) {
+        let isIn = true
+
+        if (CFG.include.length > 0) {
+          isIn = false
+          let p = 0
+          while (true) {
+            let code = CFG.include.codePointAt(p)
+            if (code === undefined) {
+              break
+            }
+            if (code === c) {
+              isIn = true
+              break
+            }
+            p++
+          }
+        }
+
+        let p = 0
+        while (true) {
+          let code = CFG.exclude.codePointAt(p)
+          if (code === undefined) {
+            break
+          }
+          if (code === c) {
+            isIn = false
+            break
+          }
+          p++
+        }
+
+        let glyph = FONT.glyphForCodePoint(c)
+        let cls
+        if (
+          glyph.cbox.minX < xMin
+          || glyph.cbox.maxX > xMax
+          || glyph.cbox.minY < yMin
+          || glyph.cbox.maxY > yMax
+          || glyph.advanceWidth != advanceUnits
+        ) {
+          isIn = false
+        }
+
+        if (isIn) {
+          cls = "in"
+          GLYPHS.push(c)
+        }
+        else {
+          cls = "out"
+        }
+        allCharacters += `<span class="${cls}">${String.fromCodePoint(c)}</span>`
+      }
+      let elem = dom("allCharacters")
+      elem.style.fontFamily = "sourceFont"
+      elem.style.fontSize = CFG.fontSizePx + "px"
+      elem.innerHTML = allCharacters
+    }
+
+    for (let id of ["fontSize", "refWidthGlyph", "overlap", "include", "exclude"]) {
+      dom(id).onchange = updateGlyphs
+    }
+
+    function arrayBufferToBase64(buffer) {
+      var binary = '';
+      var bytes = new Uint8Array(buffer);
+      var len = bytes.byteLength;
+      for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    function handleFontBlob(blob, resolve) {
+      var fkBuffer = new Buffer(blob)
+      var fkFont = fontkit.create(fkBuffer)
+      FONT = fkFont
+      window.FONT = fkFont
+      var base64 = arrayBufferToBase64(blob)
+      var sourceFont = new FontFace('sourceFont', `url(data:text/plain;base64,${base64})`);
+      sourceFont.load().then((font) => {
+        document.fonts.add(font);
+        dom("resultTable").style.fontFamily = "sourceFont"
+        resolve(fkFont)
+      });
+    }
+
+    function loadFontFromUrl(url) {
+      return new Promise((resolve) => {
+        var xhr = new XMLHttpRequest()
+        xhr.open('GET', url, true)
+        xhr.responseType = 'arraybuffer'
+        xhr.onload = function (e) {
+          if (this.status == 200) {
+            var blob = this.response
+            handleFontBlob(blob, resolve)
+          }
+        }
+        xhr.send();
+      })
+    }
+
+    function loadFontFromDisk(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          handleFontBlob(reader.result, resolve)
+        };
+        reader.readAsArrayBuffer(file)
+      })
+    }
+
+    dom("fontFile").onchange = (e) => {
+      loadFontFromDisk(e.target.files[0]).then(() => {
+        updateGlyphs()
+      })
+    }
+
+    function loadTexture(path) {
+      return new Promise((resolve) => {
+        new THREE.TextureLoader().load(path, (texture) => {
+          resolve(texture)
+        });
+      })
+    }
+
+    dom("imageFile").onchange = (e) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        loadTexture(reader.result).then((tex) => {
+          IMG = tex
+          let oc = dom("originalContainer")
+          oc.innerHTML = ""
+          oc.appendChild(tex.image)
+          showOriginal()
+        })
+      }
+      reader.readAsDataURL(e.target.files[0]);
+    }
+
+    function hexToVec3(hex) {
+      var bigint = parseInt(hex.substring(1), 16);
+      var r = (bigint >> 16) & 255;
+      var g = (bigint >> 8) & 255;
+      var b = bigint & 255;
+
+      return `vec3(float(${r / 255}), float(${g / 255}), float(${b / 255}))`
+    }
+
+    async function generate() {
+
+      CFG.forceBack = dom("forceBack").value
+      CFG.forceFore = dom("forceFore").value
+
+      var glyphWidthPx = Math.ceil(CFG.advancePx)
+      var glyphHeightPx = Math.ceil(CFG.lineHeightPx)
+
+      var canvas = dom("glyphCanvas");
+      var buffer = dom("buffer");
+
+      buffer.width = glyphWidthPx
+      buffer.height = glyphHeightPx
+
+      var glyphCanvasWidth = 1024
+      var glyphCols = Math.floor(glyphCanvasWidth / glyphWidthPx);
+      glyphCanvasWidth = glyphCols * glyphWidthPx
+      var glyphRows = Math.ceil(GLYPHS.length / glyphCols)
+      var glyphCanvasHeight = glyphRows * glyphHeightPx;
+
+      canvas.width = glyphCanvasWidth
+      canvas.height = glyphCanvasHeight
+
+      var buf = buffer.getContext("2d");
+      var ctx = canvas.getContext("2d");
+      buf.font = CFG.fontSizePx + "px sourceFont";
+      dom("resultTable").style.fontSize = CFG.fontSizePx + "px"
+
+      for (let i = 0; i < GLYPHS.length; i++) {
+
+        let txt = String.fromCodePoint(GLYPHS[i]);
+        buf.fillStyle = "white"
+        buf.fillRect(0, 0, glyphWidthPx, glyphHeightPx);
+        buf.fillStyle = "black"
+        buf.filter = `blur(${dom("blur").value}px)`
+
+        buf.fillText(txt, 0, FONT.ascent * CFG.fontSizePx / FONT.unitsPerEm);
+
+        var col = (i % glyphCols)
+        var row = Math.floor(i / glyphCols)
+
+        ctx.drawImage(buffer, col * glyphWidthPx, row * glyphHeightPx);
+      }
+
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.OrthographicCamera(0, 1, 1, 0, 0.5, 1.5);
+
+      const renderer = new THREE.WebGLRenderer();
+      window.renderer = renderer
+      //document.body.appendChild(renderer.domElement);
+
+      const geometry = new THREE.PlaneGeometry(2, 2);
+
+      const originalTex = IMG
+
+      originalTex.minFilter = THREE.LinearFilter
+      originalTex.magFilter = THREE.LinearFilter
+      const glyphTex = new THREE.CanvasTexture(dom("glyphCanvas"))
+      glyphTex.minFilter = THREE.NearestFilter
+      glyphTex.magFilter = THREE.NearestFilter
+
+      const horiTiles = Math.ceil(originalTex.image.width / glyphWidthPx);
+      const vertTiles = Math.ceil(originalTex.image.height / glyphHeightPx);
+      renderer.setSize(horiTiles * 5, vertTiles * 5);
+      renderer.domElement.style.width = originalTex.image.width + "px"
+      renderer.domElement.style.height = originalTex.image.height + "px"
+
+      const dx = 1.0 / horiTiles / glyphWidthPx
+      const dy = 1.0 / vertTiles / glyphHeightPx
+
+      const vertexShader = `
+        varying vec3 vPos; 
+
+        void main() {
+          vPos = position;
+          vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * modelViewPosition; 
+        }
+      `
+      const fragmentShader = `
+        varying vec3 vPos; 
+
+        uniform sampler2D originalTex;
+        uniform sampler2D glyphTex;
+
+        const float dx = float(${dx});
+        const float dy = float(${dy});
+        #define numGlyphPixels ${glyphWidthPx * glyphHeightPx}
+
+        ${dom("enableForceBack").checked ?
+          "#define FORCE_BACK " + hexToVec3(dom("forceBack").value) : ""}
+
+        ${dom("enableForceFore").checked ?
+          "#define FORCE_FORE " + hexToVec3(dom("forceFore").value) : ""}
+
+        const float gamma = float(${dom("gamma").value});
+
+        float rgbToFloat(vec3 rgb){
+          float r = clamp(floor(rgb.r * 256.0), 0.0, 255.0);
+          float g = clamp(floor(rgb.g * 256.0), 0.0, 255.0);
+          float b = clamp(floor(rgb.b * 256.0), 0.0, 255.0);
+
+          return r * 65536.0 + g * 256.0 + b;
+        }
+
+        void main() {
+
+          vec3 tilePixels[numGlyphPixels];
+
+          float x0 = vPos.x - 0.5 / float(${horiTiles}) + 0.5 * dx;
+          float y0 = vPos.y - 0.5 / float(${vertTiles}) + 0.5 * dy;
+
+          {
+            int i = 0;
+            for(int iy = 0; iy < ${glyphHeightPx}; iy++){
+              for(int ix = 0; ix < ${glyphWidthPx}; ix++){
+                float x = x0 + float(ix) * dx;
+                float y = y0 + float(iy) * dy;
+                vec3 texel = texture2D(originalTex, vec2(x, y)).rgb;
+                tilePixels[i] = vec3(pow(texel.r, gamma), pow(texel.g, gamma), pow(texel.b, gamma));
+                i++;
+              }
+            }
+          }
+
+
+          float lowestError = 1.0e30;
+          int bestGlyph = -1;
+          vec3 bestForeColor = vec3(0.0, 0.0, 0.0);
+          vec3 bestBackColor = vec3(1.0, 1.0, 1.0);
+
+          for(int g = 0; g < ${GLYPHS.length}; g++){
+
+            float glyphPixels[numGlyphPixels];
+            float glyphSum = 0.001; // avoid division by 0
+
+            {
+              int i = 0;
+              int col = g % ${glyphCols};
+              int row = ${glyphRows} - 1 - g / ${glyphCols}; // origin at the bottom, row index inverted
+              for(int iy = 0; iy < ${glyphHeightPx}; iy++){
+                for(int ix = 0; ix < ${glyphWidthPx}; ix++){
+                  float x = float(col) / float(${glyphCols}) + (float(ix) + 0.5) / float(${glyphCanvasWidth});
+                  float y = float(row) / float(${glyphRows}) + (float(iy) + 0.5) / float(${glyphCanvasHeight});
+                  glyphPixels[i] = 1.0 - texture2D(glyphTex, vec2(x, y)).r;
+                  glyphSum += glyphPixels[i];
+                  i++;
+                }
+              }
+            }
+
+            #ifdef FORCE_FORE
+              vec3 foreColor = FORCE_FORE;
+            #else
+              vec3 avgForeColor = vec3(0.0, 0.0, 0.0);
+              for(int i = 0; i < numGlyphPixels; i++){
+                avgForeColor += glyphPixels[i] * tilePixels[i];
+              }
+              vec3 foreColor = avgForeColor / glyphSum;
+            #endif
+
+            #ifdef FORCE_BACK
+              vec3 backColor = FORCE_BACK;
+            #else
+              vec3 avgBackColor = vec3(0.0, 0.0, 0.0);
+              for(int i = 0; i < numGlyphPixels; i++){
+                avgBackColor += (1.0 - glyphPixels[i]) * tilePixels[i];
+              }
+              vec3 backColor = avgBackColor / (float(numGlyphPixels) - glyphSum);
+            #endif
+            
+            float error = 0.0;
+            for(int i = 0; i < numGlyphPixels; i++){
+              error += pow(distance(
+                glyphPixels[i] * foreColor + (1.0-glyphPixels[i]) * backColor,
+                tilePixels[i]
+              ), 2.0);
+            }
+
+            if(error < lowestError){
+              bestGlyph = g;
+              lowestError = error;
+              bestForeColor = foreColor;
+              bestBackColor = backColor;
+            }
+            
+          }
+
+          gl_FragColor = vec4(bestGlyph, rgbToFloat(bestForeColor), rgbToFloat(bestBackColor), 1.0);
+        }
+      `
+
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          originalTex: { value: originalTex },
+          glyphTex: { value: glyphTex }
+        },
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+      });
+
+      //const material = new THREE.MeshBasicMaterial({ map: originalTex });
+      const cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+
+      camera.position.z = 1;
+
+      const renderTarget = new THREE.WebGLRenderTarget(
+        horiTiles, vertTiles, {
+        minFilter: THREE.NearestFilter,
+        magFilter: THREE.NearestFilter,
+        format: THREE.RGBAFormat,
+        type: THREE.FloatType
+      });
+      renderer.setRenderTarget(renderTarget);
+      renderer.render(scene, camera);
+      const data = new Float32Array(horiTiles * vertTiles * 4);
+      renderer.readRenderTargetPixels(renderTarget, 0, 0, horiTiles, vertTiles, data)
+      //renderer.setRenderTarget(null);
+      //renderer.render(scene, camera)
+
+      let resultTable = dom("resultTable")
+
+      let rgbFloatToHex = (rgb) => {
+        return rgb.toString(16).padStart(6, '0')
+      }
+      window.rgbFloatToHex = rgbFloatToHex
+
+      let newLine = ""
+      let lines = ""
+      for (let i = 0; i < horiTiles * vertTiles * 4; i += 4) {
+        let glyph = String.fromCodePoint(GLYPHS[data[i]]).replace(" ", "&nbsp;");
+        let foreColor = rgbFloatToHex(data[i + 1]);
+        let backColor = rgbFloatToHex(data[i + 2]);
+        newLine += `<td style="color:#${foreColor}; background-color:#${backColor}">${glyph}</td>`;
+        if ((i + 4) % (horiTiles * 4) == 0) {
+          lines = "<tr>" + newLine + "</tr>\n" + lines
+          newLine = ""
+        }
+      }
+      resultTable.innerHTML = lines
+      showResult()
+    }
+
+  </script>
+</body>
+
+</html>
