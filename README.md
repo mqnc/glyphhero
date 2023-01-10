@@ -12,11 +12,11 @@ It is an absolute dogs and birds implementation using global variables and table
 
 ![shrug](https://mqnc.github.io/glyphhero/pics/shrug_ascii.png)
 
-![fruit bowl](https://mqnc.github.io/glyphhero/pics/fruits_ascii.png)
-[Original image by Jaime Vives Piqueres](http://www.ignorancia.org/index.php/galleries/lighting-challenges/fruit-bowl/)
+![fruit bowl](https://mqnc.github.io/glyphhero/pics/fruits_ascii.png)\
+[Original image by Jaime Vives Piqueres](http://www.ignorancia.org/index.php/galleries/lighting-challenges/fruit-bowl/) [(CC BY-SA 3.0)](https://creativecommons.org/licenses/by-sa/3.0/)
 
-![bonsai](https://mqnc.github.io/glyphhero/pics/bonsais_ascii.png)
-[Original image by Jaime Vives Piqueres](http://www.ignorancia.org/index.php/galleries/archaic-images/bonsais/)
+![bonsai](https://mqnc.github.io/glyphhero/pics/bonsais_ascii.png)\
+[Original image by Jaime Vives Piqueres](http://www.ignorancia.org/index.php/galleries/archaic-images/bonsais/) [(CC BY-SA 3.0)](https://creativecommons.org/licenses/by-sa/3.0/)
 
 ## Outlook
 
